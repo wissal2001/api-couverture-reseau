@@ -1,7 +1,7 @@
 import csv
 
 import httpx
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from pyproj import Transformer
 
 app = FastAPI()
@@ -15,7 +15,7 @@ RAYONS = {"2G": 30000, "3G": 5000, "4G": 10000}
 # Les codes des opérateurs dans le fichier CSV
 OPERATEURS = {"20801": "orange", "20810": "sfr", "20815": "free", "20820": "bouygues"}
 
-# Convertir GPS (longitude, latitude) en Lambert 93 (x, y en metres)
+# Convertir GPS (longitude, latitude) en Lambert 93 (x, y en mètres)
 convertisseur = Transformer.from_crs("EPSG:4326", "EPSG:2154", always_xy=True)
 
 
@@ -43,26 +43,24 @@ def charger_tours():
 TOURS = charger_tours()
 
 
-# Trouver la longitude et la latitude d'une adresse
+# # Trouver la longitude et la latitude d'une adresse
 def trouver_coordonnees(adresse):
     try:
         reponse = httpx.get(URL, params={"q": adresse, "limit": 1}, timeout=5)
-    except httpx.HTTPError as erreur:
-        raise HTTPException(
-            status_code=503, detail="service d'adresse indisponible"
-        ) from erreur
+    except httpx.HTTPError:
+        return None, None, "service d'adresse indisponible"
 
     if reponse.status_code >= 500:
-        raise HTTPException(status_code=503, detail="service d'adresse indisponible")
+        return None, None, "service d'adresse indisponible"
     if reponse.status_code != 200:
-        raise HTTPException(status_code=404, detail="adresse introuvable")
+        return None, None, "adresse introuvable"
 
     resultats = reponse.json()["features"]
     if len(resultats) == 0 or resultats[0]["properties"]["score"] < 0.4:
-        raise HTTPException(status_code=404, detail="adresse introuvable")
+        return None, None, "adresse introuvable"
 
     longitude, latitude = resultats[0]["geometry"]["coordinates"]
-    return longitude, latitude
+    return longitude, latitude, None
 
 
 # Calculer la couverture de chaque opérateur
