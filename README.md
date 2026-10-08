@@ -43,10 +43,3 @@ pour cette adresse.
 ```bash
 uv run pytest test.py
 ```
-
-## Comment ça marche
-
-1. Je lis le fichier CSV des tours
-2. Je demande à l'API d'adresse (`data.geopf.fr`) la position de l'adresse
-3. Je convertis cette position en Lambert 93 avec pyproj
-4. Je regarde si une tour de chaque opérateur est assez proche
